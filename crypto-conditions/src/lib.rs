@@ -21,12 +21,9 @@ pub struct Ed25519Sha256 {
 }
 
 impl Ed25519Sha256 {
-    // pub const TYPE_ID: usize = 4;
-    // pub const TYPE_NAME: &'static str = "ed25519-sha-256";
     // pub const TYPE_ASN1_CONDITION: &'static str = "ed25519Sha256Condition";
     // pub const TYPE_ASN1_FULFILLMENT: &'static str = "ed25519Sha256Fulfillment";
     // pub const TYPE_CATEGORY: &'static str = "simple";
-    // pub const CONSTANT_COST: usize = 131072;
 
     pub fn new() -> Self {
         Self {
@@ -54,10 +51,7 @@ impl Fingerprint for Ed25519Sha256 {
 impl Fulfillment for Ed25519Sha256 {
     const TYPE_ID: usize = 4;
     const TYPE_NAME: &'static str = "ed25519-sha-256";
-
-    fn caculate_cost(&self) -> usize {
-        todo!()
-    }
+    const CONSTANT_COST: usize = 131072;
 }
 
 impl From<&str> for Ed25519Sha256 {
@@ -93,5 +87,25 @@ mod tests {
                 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
             ]
         );
+    }
+
+    #[test]
+    fn test_ed25519sha256_fulfillment() {
+        let mut hash = Ed25519Sha256::new();
+        hash.set_public_key([1u8; 32]);
+
+        println!("{:?}", hash.generate_hash());
+
+        assert_eq!(hash.get_type_id(), 4);
+        assert_eq!(hash.get_type_name(), "ed25519-sha-256");
+        assert_eq!(hash.caculate_cost(), 131072);
+        assert_eq!(
+            hash.generate_hash(),
+            [
+                73, 36, 153, 193, 199, 220, 115, 190, 177, 28, 106, 24, 227, 194, 108, 81, 56, 106,
+                209, 202, 250, 126, 2, 86, 9, 31, 37, 95, 31, 94, 228, 93
+            ]
+        );
+        assert_eq!(hash.get_condition_uri(), "ni:///sha-256;SSSZwcfcc76xHGoY48JsUThq0cr6fgJWCR8lXx9e5F0?fpt=ed25519-sha-256&cost=131072");
     }
 }

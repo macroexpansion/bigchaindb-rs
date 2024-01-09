@@ -1,10 +1,13 @@
 use std::collections::HashSet;
 
-use crate::condition::Condition;
+use sha2::{Digest, Sha256};
 
-pub trait Fulfillment {
+use crate::{condition::Condition, schema::fingerprint::Fingerprint};
+
+pub trait Fulfillment: Fingerprint {
     const TYPE_ID: usize;
     const TYPE_NAME: &'static str;
+    const CONSTANT_COST: usize;
 
     fn get_type_id(&self) -> usize {
         Self::TYPE_ID
@@ -27,6 +30,18 @@ pub trait Fulfillment {
         self.get_condition().serialize_uri()
     }
 
-    fn generate_hash(&self) -> [u8; 32];
-    fn caculate_cost(&self) -> usize;
+    fn generate_hash(&self) -> [u8; 32] {
+        let mut hash = Sha256::new();
+        hash.update(self.get_fingerprint_contents());
+
+        let mut buffer = [0u8; 32];
+        let digest = hash.finalize();
+        buffer.clone_from_slice(&digest[..]);
+
+        buffer
+    }
+
+    fn caculate_cost(&self) -> usize {
+        Self::CONSTANT_COST
+    }
 }
