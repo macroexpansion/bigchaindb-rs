@@ -14,7 +14,6 @@ pub mod fingerprint {
     #[cfg(test)]
     mod tests {
         use super::*;
-        use asn1::*;
 
         #[test]
         fn test_ed25519_fingerprint_contents() {
