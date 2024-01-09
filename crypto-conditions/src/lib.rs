@@ -5,7 +5,10 @@ pub mod util;
 
 use bs58;
 
-use crate::fulfillment::Fulfillment;
+use crate::{
+    fulfillment::Fulfillment,
+    schema::fingerprint::{Ed25519FingerprintContents, Fingerprint},
+};
 
 pub trait BaseSha256 {
     fn generate_hash(&self) -> [u8; 64];
@@ -37,13 +40,20 @@ impl Ed25519Sha256 {
     }
 }
 
+impl Fingerprint for Ed25519Sha256 {
+    fn get_fingerprint_contents(&self) -> Vec<u8> {
+        let buffer = asn1::write_single(&Ed25519FingerprintContents {
+            public_key: self.public_key.map(|e| e.to_vec()).as_deref(),
+        })
+        .expect("write ASN.1 error");
+
+        buffer
+    }
+}
+
 impl Fulfillment for Ed25519Sha256 {
     const TYPE_ID: usize = 4;
     const TYPE_NAME: &'static str = "ed25519-sha-256";
-
-    fn generate_hash(&self) -> [u8; 32] {
-        todo!()
-    }
 
     fn caculate_cost(&self) -> usize {
         todo!()
@@ -60,5 +70,28 @@ impl From<&str> for Ed25519Sha256 {
         ed25519_fulfillment.set_public_key(buffer);
 
         ed25519_fulfillment
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_ed25519sha256_fingerprint() {
+        let bytes = [1u8; 32];
+        let hash = Ed25519Sha256 {
+            public_key: Some(bytes),
+            signature: None,
+        };
+        let fingerprint = hash.get_fingerprint_contents();
+
+        assert_eq!(
+            fingerprint,
+            [
+                48, 34, 128, 32, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+            ]
+        );
     }
 }
