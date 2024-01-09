@@ -1,5 +1,6 @@
 pub mod condition;
 pub mod fulfillment;
+pub mod schema;
 pub mod util;
 
 use bs58;
