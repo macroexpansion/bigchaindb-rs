@@ -1,6 +1,7 @@
-use bs58;
 use crypto_conditions::{self, Ed25519Sha256};
 use serde::Serialize;
+
+use crate::{cc_jsonify, JsonBody};
 
 #[derive(Debug, Serialize)]
 pub enum Operation {
@@ -120,5 +121,37 @@ impl Transaction {
             inputs,
         );
         tx
+    }
+
+    fn make_ed25519_condition(pubkey: &str, json: bool) -> Option<JsonBody> {
+        let fulfillment = Ed25519Sha256::from(pubkey);
+
+        // TODO: implement this from js code
+        // return json ? ccJsonify(ed25519Fulfillment) : ed25519Fulfillment
+        if json {
+            cc_jsonify(fulfillment)
+        } else {
+            todo!()
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_make_ed25519_condition_with_cc_jsonify() {
+        let bytes = [1u8; 32];
+        let pk = bs58::encode(bytes).into_string();
+
+        let condition = Transaction::make_ed25519_condition(&pk, true).unwrap();
+
+        assert_eq!(condition.details.type_, "ed25519-sha-256");
+        assert_eq!(
+            condition.details.public_key,
+            "4vJ9JU1bJJE96FWSJKvHsmmFADCg4gpZQff4P3bkLKi"
+        );
+        assert_eq!(condition.uri, "ni:///sha-256;SSSZwcfcc76xHGoY48JsUThq0cr6fgJWCR8lXx9e5F0?fpt=ed25519-sha-256&cost=131072");
     }
 }

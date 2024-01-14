@@ -1,7 +1,7 @@
 pub mod transaction;
 
 use bs58;
-use crypto_conditions::Ed25519Sha256;
+use crypto_conditions::{fulfillment::Fulfillment, Ed25519Sha256};
 use rand::RngCore;
 use serde::Serialize;
 use tweetnacl;
@@ -34,7 +34,7 @@ pub fn ed25519_keypair() -> Ed25519Keypair {
 #[derive(Debug, Serialize)]
 pub struct Details {
     #[serde(rename = "type")]
-    pub _type: String,
+    pub type_: String,
     pub public_key: String,
 }
 
@@ -44,12 +44,20 @@ pub struct JsonBody {
     uri: String,
 }
 
-pub fn cc_jsonify(fulfillment: Ed25519Sha256) -> JsonBody {
-    let uri = "fds".to_string();
-    let details = Details {
-        _type: String::from("ed25519-sha-256"),
-        public_key: bs58::encode(fulfillment.public_key.unwrap_or_default()).into_string(),
-    };
+pub fn cc_jsonify(fulfillment: Ed25519Sha256) -> Option<JsonBody> {
+    let condition_uri = fulfillment.get_condition_uri();
 
-    JsonBody { details, uri }
+    if fulfillment.get_type_id() == Ed25519Sha256::TYPE_ID {
+        let details = Details {
+            type_: String::from(Ed25519Sha256::TYPE_NAME),
+            public_key: bs58::encode(fulfillment.public_key.unwrap_or_default()).into_string(),
+        };
+
+        return Some(JsonBody {
+            details,
+            uri: condition_uri,
+        });
+    }
+
+    None
 }
