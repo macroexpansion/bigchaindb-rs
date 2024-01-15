@@ -1,7 +1,9 @@
-use crypto_conditions::{self, Ed25519Sha256};
+use std::collections::HashSet;
+
+use crypto_conditions::{self, fulfillment::Fulfillment, Ed25519Sha256};
 use serde::Serialize;
 
-use crate::{cc_jsonify, JsonBody};
+use crate::{cc_jsonify, Details, JsonBody};
 
 #[derive(Debug, Serialize)]
 pub enum Operation {
@@ -42,19 +44,9 @@ pub struct Ed25519Condition {
 
 #[derive(Debug, Serialize)]
 pub struct Output {
-    pub condition: Ed25519Condition,
+    pub condition: JsonBody,
     pub amount: String,
     pub public_keys: Vec<String>,
-}
-
-impl Output {
-    pub fn new(condition: Ed25519Condition, amount: String) -> Self {
-        Self {
-            condition,
-            amount,
-            public_keys: Vec::new(),
-        }
-    }
 }
 
 #[derive(Debug, Serialize)]
@@ -134,6 +126,29 @@ impl Transaction {
             todo!()
         }
     }
+
+    fn make_output(condition: JsonBody, amount: String) -> Output {
+        let mut public_keys = HashSet::new();
+        let mut get_public_keys = |details: &Details| {
+            if details.type_ == Ed25519Sha256::TYPE_NAME {
+                public_keys.insert(details.public_key.clone());
+            } else {
+                // TODO: implement this from js code
+                // } else if (details.type === 'threshold-sha-256') {
+                //     details.subconditions.map(getPublicKeys)
+                // }
+                todo!()
+            }
+        };
+
+        get_public_keys(&condition.details);
+
+        Output {
+            condition,
+            amount,
+            public_keys: Vec::from_iter(public_keys),
+        }
+    }
 }
 
 #[cfg(test)]
@@ -153,5 +168,28 @@ mod tests {
             "4vJ9JU1bJJE96FWSJKvHsmmFADCg4gpZQff4P3bkLKi"
         );
         assert_eq!(condition.uri, "ni:///sha-256;SSSZwcfcc76xHGoY48JsUThq0cr6fgJWCR8lXx9e5F0?fpt=ed25519-sha-256&cost=131072");
+    }
+
+    #[test]
+    fn test_make_output() {
+        let bytes = [1u8; 32];
+        let pk = bs58::encode(bytes).into_string();
+
+        let condition = Transaction::make_ed25519_condition(&pk, true).unwrap();
+
+        assert_eq!(condition.details.type_, "ed25519-sha-256");
+        assert_eq!(
+            condition.details.public_key,
+            "4vJ9JU1bJJE96FWSJKvHsmmFADCg4gpZQff4P3bkLKi"
+        );
+        assert_eq!(condition.uri, "ni:///sha-256;SSSZwcfcc76xHGoY48JsUThq0cr6fgJWCR8lXx9e5F0?fpt=ed25519-sha-256&cost=131072");
+
+        let output = Transaction::make_output(condition, String::from("1"));
+
+        assert_eq!(&output.amount, "1");
+        assert_eq!(
+            output.public_keys.first().unwrap(),
+            "4vJ9JU1bJJE96FWSJKvHsmmFADCg4gpZQff4P3bkLKi"
+        );
     }
 }
