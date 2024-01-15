@@ -105,14 +105,14 @@ impl Transaction {
             .iter()
             .map(|issuer| InputTemplate::new(vec![issuer.to_string()], None, None))
             .collect();
-        let tx = Self::make_transaction(
+
+        Self::make_transaction(
             Operation::CREATE,
             asset_definition,
             metadata,
             outputs,
             inputs,
-        );
-        tx
+        )
     }
 
     fn make_ed25519_condition(pubkey: &str, json: bool) -> Option<JsonBody> {
@@ -191,5 +191,30 @@ mod tests {
             output.public_keys.first().unwrap(),
             "4vJ9JU1bJJE96FWSJKvHsmmFADCg4gpZQff4P3bkLKi"
         );
+    }
+
+    #[test]
+    fn test_make_create_transaction() {
+        let assetdata = serde_json::json!({
+            "ft": {
+                "signature": "signature",
+                "device": "device",
+            }
+        });
+        let metadata = serde_json::json!({"metadata": "metadata"});
+        let asset = Some(assetdata);
+
+        let bytes = [1u8; 32];
+        let pk = bs58::encode(bytes).into_string();
+        let condition = Transaction::make_ed25519_condition(&pk, true).unwrap();
+
+        let output = Transaction::make_output(condition, String::from("1"));
+
+        let transaction =
+            Transaction::make_create_transaction(asset, metadata, vec![output], vec![pk]);
+        let json = serde_json::to_string(&transaction).unwrap();
+
+        let json_target = r#"{"id":null,"operation":"CREATE","outputs":[{"condition":{"details":{"type":"ed25519-sha-256","public_key":"4vJ9JU1bJJE96FWSJKvHsmmFADCg4gpZQff4P3bkLKi"},"uri":"ni:///sha-256;SSSZwcfcc76xHGoY48JsUThq0cr6fgJWCR8lXx9e5F0?fpt=ed25519-sha-256&cost=131072"},"amount":"1","public_keys":["4vJ9JU1bJJE96FWSJKvHsmmFADCg4gpZQff4P3bkLKi"]}],"inputs":[{"fulfillment":null,"fulfills":null,"owners_before":["4vJ9JU1bJJE96FWSJKvHsmmFADCg4gpZQff4P3bkLKi"]}],"metadata":{"metadata":"metadata"},"asset":{"data":{"ft":{"device":"device","signature":"signature"}}},"version":"2.0"}"#;
+        assert_eq!(json, json_target);
     }
 }
