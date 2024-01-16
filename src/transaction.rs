@@ -16,6 +16,7 @@ pub struct AssetDefinition<T: Serialize> {
     pub data: Option<T>,
 }
 
+/// Fields of this struct needed to be sorted alphabetically
 #[derive(Debug, Serialize)]
 pub struct InputTemplate {
     pub fulfillment: Option<String>,
@@ -42,21 +43,23 @@ pub struct Ed25519Condition {
     detail: String,
 }
 
+/// Fields of this struct needed to be sorted alphabetically
 #[derive(Debug, Serialize)]
 pub struct Output {
-    pub condition: JsonBody,
     pub amount: String,
+    pub condition: JsonBody,
     pub public_keys: Vec<String>,
 }
 
+/// Fields of this struct needed to be sorted alphabetically
 #[derive(Debug, Serialize)]
 pub struct TransactionTemplate<M: Serialize, A: Serialize> {
+    pub asset: Option<A>,
     pub id: Option<String>,
-    pub operation: Option<Operation>,
-    pub outputs: Vec<Output>,
     pub inputs: Vec<InputTemplate>,
     pub metadata: Option<M>,
-    pub asset: Option<A>,
+    pub operation: Option<Operation>,
+    pub outputs: Vec<Output>,
     pub version: String,
 }
 
@@ -71,6 +74,10 @@ impl<M: Serialize, A: Serialize> TransactionTemplate<M, A> {
             asset: None,
             version: String::from("2.0"),
         }
+    }
+
+    pub fn serialize_transaction_into_canonical_string(&self) -> String {
+        serde_json::to_string(&self).unwrap()
     }
 }
 
@@ -194,7 +201,7 @@ mod tests {
     }
 
     #[test]
-    fn test_make_create_transaction() {
+    fn test_make_create_transaction_and_stable_stringify() {
         let assetdata = serde_json::json!({
             "ft": {
                 "signature": "signature",
@@ -212,9 +219,9 @@ mod tests {
 
         let transaction =
             Transaction::make_create_transaction(asset, metadata, vec![output], vec![pk]);
-        let json = serde_json::to_string(&transaction).unwrap();
+        let json = transaction.serialize_transaction_into_canonical_string();
 
-        let json_target = r#"{"id":null,"operation":"CREATE","outputs":[{"condition":{"details":{"type":"ed25519-sha-256","public_key":"4vJ9JU1bJJE96FWSJKvHsmmFADCg4gpZQff4P3bkLKi"},"uri":"ni:///sha-256;SSSZwcfcc76xHGoY48JsUThq0cr6fgJWCR8lXx9e5F0?fpt=ed25519-sha-256&cost=131072"},"amount":"1","public_keys":["4vJ9JU1bJJE96FWSJKvHsmmFADCg4gpZQff4P3bkLKi"]}],"inputs":[{"fulfillment":null,"fulfills":null,"owners_before":["4vJ9JU1bJJE96FWSJKvHsmmFADCg4gpZQff4P3bkLKi"]}],"metadata":{"metadata":"metadata"},"asset":{"data":{"ft":{"device":"device","signature":"signature"}}},"version":"2.0"}"#;
+        let json_target = r#"{"asset":{"data":{"ft":{"device":"device","signature":"signature"}}},"id":null,"inputs":[{"fulfillment":null,"fulfills":null,"owners_before":["4vJ9JU1bJJE96FWSJKvHsmmFADCg4gpZQff4P3bkLKi"]}],"metadata":{"metadata":"metadata"},"operation":"CREATE","outputs":[{"amount":"1","condition":{"details":{"public_key":"4vJ9JU1bJJE96FWSJKvHsmmFADCg4gpZQff4P3bkLKi","type":"ed25519-sha-256"},"uri":"ni:///sha-256;SSSZwcfcc76xHGoY48JsUThq0cr6fgJWCR8lXx9e5F0?fpt=ed25519-sha-256&cost=131072"},"public_keys":["4vJ9JU1bJJE96FWSJKvHsmmFADCg4gpZQff4P3bkLKi"]}],"version":"2.0"}"#;
         assert_eq!(json, json_target);
     }
 }
