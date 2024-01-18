@@ -26,11 +26,11 @@ impl<S> Ed25519Signer<S>
 where
     S: Signer<ed25519::Signature>,
 {
-    pub fn sign(&self, message: String) -> ed25519::Signature {
+    pub fn sign(&self, message: &[u8]) -> ed25519::Signature {
         // NOTE: use `try_sign` if you'd like to be able to handle
         // errors from external signing services/devices (e.g. HSM/KMS)
         // <https://docs.rs/signature/latest/signature/trait.Signer.html#tymethod.try_sign>
-        self.signing_key.sign(message.as_bytes())
+        self.signing_key.sign(message)
     }
 }
 
@@ -58,7 +58,7 @@ impl Ed25519Sha256 {
         self.public_key = Some(public_key);
     }
 
-    pub fn sign(&mut self, message: String, private_key: &[u8; 32]) {
+    pub fn sign(&mut self, message: &[u8], private_key: &[u8; 32]) {
         let signing_key = SigningKey::from_bytes(&private_key);
         let verifying_key = signing_key.verifying_key();
         self.public_key = Some(verifying_key.0);
@@ -152,7 +152,7 @@ mod tests {
 
         let mut hash = Ed25519Sha256::new();
         let message = "Hello, world";
-        hash.sign(message.to_string(), &buffer);
+        hash.sign(message.as_bytes(), &buffer);
 
         assert_eq!(
             bs58::encode(hash.signature.unwrap()).into_string(),
