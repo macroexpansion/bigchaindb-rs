@@ -4,6 +4,7 @@ pub mod schema;
 pub mod util;
 
 use bs58;
+use ring_compat::signature::{ed25519::SigningKey, Signer};
 
 use crate::{
     fulfillment::Fulfillment,
@@ -13,6 +14,27 @@ use crate::{
 pub trait BaseSha256 {
     fn generate_hash(&self) -> [u8; 64];
 }
+
+pub struct Ed25519Signer<S>
+where
+    S: Signer<ed25519::Signature>,
+{
+    pub signing_key: S,
+}
+
+impl<S> Ed25519Signer<S>
+where
+    S: Signer<ed25519::Signature>,
+{
+    pub fn sign(&self, message: String) -> ed25519::Signature {
+        // NOTE: use `try_sign` if you'd like to be able to handle
+        // errors from external signing services/devices (e.g. HSM/KMS)
+        // <https://docs.rs/signature/latest/signature/trait.Signer.html#tymethod.try_sign>
+        self.signing_key.sign(message.as_bytes())
+    }
+}
+
+pub type RingEd25519Signer = Ed25519Signer<SigningKey>;
 
 #[derive(Debug)]
 pub struct Ed25519Sha256 {
@@ -34,6 +56,16 @@ impl Ed25519Sha256 {
 
     pub fn set_public_key(&mut self, public_key: [u8; 32]) {
         self.public_key = Some(public_key);
+    }
+
+    pub fn sign(&mut self, message: String, private_key: &[u8; 32]) {
+        let signing_key = SigningKey::from_bytes(&private_key);
+        let verifying_key = signing_key.verifying_key();
+        self.public_key = Some(verifying_key.0);
+
+        let signer = RingEd25519Signer { signing_key };
+        let signature = signer.sign(message);
+        self.signature = Some(signature.to_bytes());
     }
 }
 
@@ -107,5 +139,25 @@ mod tests {
             ]
         );
         assert_eq!(hash.get_condition_uri(), "ni:///sha-256;SSSZwcfcc76xHGoY48JsUThq0cr6fgJWCR8lXx9e5F0?fpt=ed25519-sha-256&cost=131072");
+    }
+
+    #[test]
+    fn test_ed25519_sign() {
+        let pubkey = "6zaQbbRi7RCFhCF35tpVDu2nEfR9fZCqx2MvUa7pKRmX";
+        let prikey = "CHwxsNPzRXTzCz25KZ9TJcBJ45H25JKkLL4HrX1nBfXT";
+
+        let private_key = bs58::decode(prikey).into_vec().unwrap();
+        let mut buffer = [0u8; 32];
+        buffer.copy_from_slice(&private_key[..]);
+
+        let mut hash = Ed25519Sha256::new();
+        let message = "Hello, world";
+        hash.sign(message.to_string(), &buffer);
+
+        assert_eq!(
+            bs58::encode(hash.signature.unwrap()).into_string(),
+            "5DTN5U1C3rEsVKADyMkqVEzKQ6kVbkCtuCWf28iuqJnaeDtFmLAamwfqFV6LMwBNkJM9iU1UkXRmdwBUdYAc5yTU"
+        );
+        assert_eq!(bs58::encode(hash.public_key.unwrap()).into_string(), pubkey);
     }
 }
