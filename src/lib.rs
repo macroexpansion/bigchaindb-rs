@@ -1,3 +1,4 @@
+pub mod sha256_hash;
 pub mod transaction;
 pub mod util;
 
