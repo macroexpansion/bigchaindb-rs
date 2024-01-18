@@ -36,7 +36,7 @@ pub trait Fulfillment: Fingerprint {
 
         let mut buffer = [0u8; 32];
         let digest = hash.finalize();
-        buffer.clone_from_slice(&digest[..]);
+        buffer.copy_from_slice(&digest[..]);
 
         buffer
     }

@@ -58,7 +58,7 @@ impl From<&str> for Ed25519Sha256 {
     fn from(public_key: &str) -> Self {
         let public_key = bs58::decode(public_key).into_vec().unwrap();
         let mut buffer = [0u8; 32];
-        buffer.clone_from_slice(&public_key[..]);
+        buffer.copy_from_slice(&public_key[..]);
 
         let mut ed25519_fulfillment = Self::new();
         ed25519_fulfillment.set_public_key(buffer);
