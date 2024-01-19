@@ -142,7 +142,7 @@ mod tests {
     }
 
     #[test]
-    fn test_ed25519_sign() {
+    fn test_ed25519sha256_sign() {
         let pubkey = "6zaQbbRi7RCFhCF35tpVDu2nEfR9fZCqx2MvUa7pKRmX";
         let prikey = "CHwxsNPzRXTzCz25KZ9TJcBJ45H25JKkLL4HrX1nBfXT";
 
