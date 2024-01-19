@@ -8,7 +8,10 @@ use ring_compat::signature::{ed25519::SigningKey, Signer};
 
 use crate::{
     fulfillment::Fulfillment,
-    schema::fingerprint::{Ed25519FingerprintContents, Fingerprint},
+    schema::{
+        fingerprint::{Ed25519FingerprintContents, Fingerprint},
+        fulfillment::{Ed25519Sha256Fulfillment, FulfillmentChoice},
+    },
 };
 
 pub trait BaseSha256 {
@@ -43,10 +46,6 @@ pub struct Ed25519Sha256 {
 }
 
 impl Ed25519Sha256 {
-    // pub const TYPE_ASN1_CONDITION: &'static str = "ed25519Sha256Condition";
-    // pub const TYPE_ASN1_FULFILLMENT: &'static str = "ed25519Sha256Fulfillment";
-    // pub const TYPE_CATEGORY: &'static str = "simple";
-
     pub fn new() -> Self {
         Self {
             public_key: None,
@@ -84,6 +83,19 @@ impl Fulfillment for Ed25519Sha256 {
     const TYPE_ID: usize = 4;
     const TYPE_NAME: &'static str = "ed25519-sha-256";
     const CONSTANT_COST: usize = 131072;
+
+    // TODO: handle unwrap()
+    fn serialize_binary(&self) -> Vec<u8> {
+        let public_key: &[u8] = &self.public_key.as_ref().unwrap().as_slice();
+        let signature: &[u8] = &self.signature.as_ref().unwrap().as_slice();
+        let fulfillment = Ed25519Sha256Fulfillment {
+            public_key: Some(public_key),
+            signature: Some(signature),
+        };
+        let choice = FulfillmentChoice::Ed25519Sha256Fulfillment(fulfillment);
+
+        asn1::write_single(&choice).unwrap()
+    }
 }
 
 impl From<&str> for Ed25519Sha256 {
@@ -159,5 +171,21 @@ mod tests {
             "5DTN5U1C3rEsVKADyMkqVEzKQ6kVbkCtuCWf28iuqJnaeDtFmLAamwfqFV6LMwBNkJM9iU1UkXRmdwBUdYAc5yTU"
         );
         assert_eq!(bs58::encode(hash.public_key.unwrap()).into_string(), pubkey);
+    }
+
+    #[test]
+    fn test_ed25519sha256_serialize_uri() {
+        let prikey = "CHwxsNPzRXTzCz25KZ9TJcBJ45H25JKkLL4HrX1nBfXT";
+
+        let private_key = bs58::decode(prikey).into_vec().unwrap();
+        let mut buffer = [0u8; 32];
+        buffer.copy_from_slice(&private_key[..]);
+
+        let mut hash = Ed25519Sha256::new();
+        let message = "Hello, world";
+        hash.sign(message.as_bytes(), &buffer);
+        let uri = hash.serialize_uri();
+
+        assert_eq!(uri, "pGSAIFkKUGDcxBrRc-k6GZd_C4LVMmJJge7S0sJ22p9w-Ma2gUDSzu3gXlYsjtEfA6IGriW92d53FRrvAgh9EvbUxIlmWKaf6N4zXPuBG8gRsX3HEAy_APschx40Iien8p_N760P")
     }
 }

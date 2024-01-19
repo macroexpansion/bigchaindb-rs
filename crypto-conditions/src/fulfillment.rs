@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use sha2::{Digest, Sha256};
 
-use crate::{condition::Condition, schema::fingerprint::Fingerprint};
+use crate::{condition::Condition, schema::fingerprint::Fingerprint, util::Base64Url};
 
 pub trait Fulfillment: Fingerprint {
     const TYPE_ID: usize;
@@ -44,4 +44,10 @@ pub trait Fulfillment: Fingerprint {
     fn caculate_cost(&self) -> usize {
         Self::CONSTANT_COST
     }
+
+    fn serialize_uri(&self) -> String {
+        Base64Url::encode(&self.serialize_binary())
+    }
+
+    fn serialize_binary(&self) -> Vec<u8>;
 }
