@@ -1,6 +1,5 @@
 pub mod sha256_hash;
 pub mod transaction;
-pub mod util;
 
 use bs58;
 use crypto_conditions::{fulfillment::Fulfillment, Ed25519Sha256};
@@ -34,7 +33,7 @@ pub fn ed25519_keypair() -> Ed25519Keypair {
 }
 
 /// Fields of this struct needed to be sorted alphabetically
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Clone)]
 pub struct Details {
     pub public_key: String,
     #[serde(rename = "type")]
@@ -42,7 +41,7 @@ pub struct Details {
 }
 
 /// Fields of this struct needed to be sorted alphabetically
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Clone)]
 pub struct JsonBody {
     details: Details,
     uri: String,
