@@ -4,6 +4,7 @@ use std::collections::HashSet;
 
 use crypto_conditions::{self, fulfillment::Fulfillment, Ed25519Sha256};
 use serde::Serialize;
+use serde_json::Value as JsonValue;
 
 use crate::{cc_jsonify, sha256_hash::sha256_hash, Details, JsonBody};
 
@@ -14,8 +15,8 @@ pub enum Operation {
 }
 
 #[derive(Debug, Serialize, Clone)]
-pub struct AssetDefinition<T: Serialize + Clone> {
-    pub data: Option<T>,
+pub struct AssetDefinition {
+    pub data: Option<JsonValue>,
 }
 
 /// Fields of this struct needed to be sorted alphabetically
@@ -55,17 +56,17 @@ pub struct Output {
 
 /// Fields of this struct needed to be sorted alphabetically
 #[derive(Debug, Serialize, Clone)]
-pub struct TransactionTemplate<M: Serialize + Clone, A: Serialize + Clone> {
-    pub asset: Option<A>,
+pub struct TransactionTemplate {
+    pub asset: Option<AssetDefinition>,
     pub id: Option<String>,
     pub inputs: Vec<InputTemplate>,
-    pub metadata: Option<M>,
+    pub metadata: Option<JsonValue>,
     pub operation: Option<Operation>,
     pub outputs: Vec<Output>,
     pub version: String,
 }
 
-impl<M: Serialize + Clone, A: Serialize + Clone> TransactionTemplate<M, A> {
+impl TransactionTemplate {
     pub fn new() -> Self {
         Self {
             id: None,
@@ -88,11 +89,11 @@ pub struct Transaction;
 impl Transaction {
     fn make_transaction(
         operation: Operation,
-        asset: impl Serialize + Clone,
-        metadata: impl Serialize + Clone,
+        asset: AssetDefinition,
+        metadata: JsonValue,
         outputs: Vec<Output>,
         inputs: Vec<InputTemplate>,
-    ) -> TransactionTemplate<impl Serialize + Clone, impl Serialize + Clone> {
+    ) -> TransactionTemplate {
         let mut tx = TransactionTemplate::new();
         tx.operation = Some(operation);
         tx.asset = Some(asset);
@@ -104,11 +105,11 @@ impl Transaction {
 
     /// Generate a `CREATE` transaction holding the `asset`, `metadata`, and `outputs`, to be signed by the `issuers`.
     pub fn make_create_transaction(
-        asset: Option<impl Serialize + Clone>,
-        metadata: impl Serialize + Clone,
+        asset: Option<JsonValue>,
+        metadata: JsonValue,
         outputs: Vec<Output>,
         issuers: Vec<String>,
-    ) -> TransactionTemplate<impl Serialize + Clone, impl Serialize + Clone> {
+    ) -> TransactionTemplate {
         let asset_definition = AssetDefinition { data: asset };
         let inputs: Vec<InputTemplate> = issuers
             .iter()
@@ -159,15 +160,11 @@ impl Transaction {
         }
     }
 
-    fn sign_transaction<A, M>(
-        transaction: &TransactionTemplate<A, M>,
+    fn sign_transaction(
+        transaction: &TransactionTemplate,
         private_keys: Vec<&str>,
-    ) -> TransactionTemplate<A, M>
-    where
-        A: Serialize + Clone,
-        M: Serialize + Clone,
-    {
-        let mut signed_transaction: TransactionTemplate<A, M> = transaction.clone();
+    ) -> TransactionTemplate {
+        let mut signed_transaction: TransactionTemplate = transaction.clone();
         let serialized_transaction = transaction.serialize_transaction_into_canonical_string();
 
         for (index, input_template) in signed_transaction.inputs.iter_mut().enumerate() {
