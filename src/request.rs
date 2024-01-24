@@ -1,4 +1,5 @@
 use std::{
+    cell::Cell,
     collections::HashMap,
     time::{Duration, Instant},
 };
@@ -57,8 +58,8 @@ impl<'a> RequestOption<'a> {
 #[derive(Clone, Debug)]
 pub struct Request<'a> {
     pub node: NormalizedNode<'a>,
-    pub backoff_time: Option<Instant>,
-    pub retries: usize,
+    pub backoff_time: Cell<Option<Instant>>,
+    pub retries: Cell<usize>,
     pub connection_error: Option<String>,
 }
 
@@ -66,14 +67,14 @@ impl<'a> Request<'a> {
     pub fn new(node: NormalizedNode<'a>) -> Self {
         Self {
             node,
-            backoff_time: Some(Instant::now()),
-            retries: 0,
+            backoff_time: Cell::new(Some(Instant::now())),
+            retries: Cell::new(0),
             connection_error: None,
         }
     }
 
     pub async fn request<T: DeserializeOwned>(
-        &mut self,
+        &self,
         url_path: &str,
         config: &RequestOption<'_>,
         timeout: Duration,
@@ -134,17 +135,17 @@ impl<'a> Request<'a> {
     }
 
     fn get_backoff_time_delta(&self) -> Duration {
-        if let Some(value) = self.backoff_time {
+        if let Some(value) = self.backoff_time.get() {
             value.duration_since(Instant::now())
         } else {
             Duration::new(0, 0)
         }
     }
 
-    fn update_backoff_time(&mut self, _max_backoff_time: Duration) {
+    fn update_backoff_time(&self, _max_backoff_time: Duration) {
         if self.connection_error.is_none() {
-            self.backoff_time = None;
-            self.retries = 0;
+            self.backoff_time.set(None);
+            self.retries.set(0);
         }
     }
 }

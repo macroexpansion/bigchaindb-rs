@@ -35,13 +35,13 @@ impl<'a> Transport<'a> {
     ) -> Result<T, Error> {
         while self.timeout.is_some() {
             let start_time = Instant::now();
-            let mut connection = self.pick_connection().clone();
+            let connection = self.pick_connection();
             let response: T = connection
                 .request(path, options, self.timeout.unwrap(), self.max_backoff_time)
                 .await?;
             let elapsed = Instant::now().duration_since(start_time);
 
-            if connection.backoff_time.is_some() && self.timeout.unwrap().as_millis() > 0 {
+            if connection.backoff_time.get().is_some() && self.timeout.unwrap().as_millis() > 0 {
                 self.timeout = self.timeout.unwrap().checked_sub(elapsed);
             } else {
                 // No connection error, the response is valid
@@ -55,7 +55,7 @@ impl<'a> Transport<'a> {
     fn pick_connection(&self) -> &Request {
         let mut connection = &self.connection_pool[0];
         for conn in self.connection_pool.iter() {
-            if conn.backoff_time.unwrap() < connection.backoff_time.unwrap() {
+            if conn.backoff_time.get().unwrap() < connection.backoff_time.get().unwrap() {
                 connection = conn;
             }
         }
