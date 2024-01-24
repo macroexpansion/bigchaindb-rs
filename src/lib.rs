@@ -1,3 +1,4 @@
+pub mod error;
 pub mod sha256_hash;
 pub mod transaction;
 
