@@ -2,6 +2,7 @@ pub mod error;
 pub mod request;
 pub mod sha256_hash;
 pub mod transaction;
+pub mod transport;
 
 use bs58;
 use crypto_conditions::{fulfillment::Fulfillment, Ed25519Sha256};
