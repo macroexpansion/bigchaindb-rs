@@ -5,6 +5,10 @@ pub mod sha256_hash;
 pub mod transaction;
 pub mod transport;
 
+pub mod json {
+    pub use serde_json::*;
+}
+
 use bs58;
 use crypto_conditions::{fulfillment::Fulfillment, Ed25519Sha256};
 use rand::RngCore;
