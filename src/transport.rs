@@ -18,6 +18,7 @@ pub struct Transport<'a> {
 impl<'a> Transport<'a> {
     pub fn new(nodes: Vec<NormalizedNode<'a>>, timeout: Duration) -> Self {
         let mut connection_pool = Vec::new();
+
         for node in nodes {
             connection_pool.push(Request::new(node));
         }
@@ -36,14 +37,19 @@ impl<'a> Transport<'a> {
     ) -> Result<T, Error> {
         while self.timeout.is_some() {
             let start_time = Instant::now();
+
             let connection = self.pick_connection();
             let response: T = connection
                 .request(path, options, self.timeout.unwrap(), self.max_backoff_time)
                 .await?;
+
             let elapsed = Instant::now().duration_since(start_time);
 
-            if connection.backoff_time.get().is_some() && self.timeout.unwrap().as_millis() > 0 {
+            if connection.backoff_time.lock().unwrap().is_some()
+                && self.timeout.unwrap().as_millis() > 0
+            {
                 self.timeout = self.timeout.unwrap().checked_sub(elapsed);
+                todo!()
             } else {
                 // No connection error, the response is valid
                 return Ok(response);
@@ -56,7 +62,9 @@ impl<'a> Transport<'a> {
     fn pick_connection(&self) -> &Request {
         let mut connection = &self.connection_pool[0];
         for conn in self.connection_pool.iter() {
-            if conn.backoff_time.get().unwrap() < connection.backoff_time.get().unwrap() {
+            let conn_backoff_time = *conn.backoff_time.lock().unwrap();
+            let connection_backoff_time = *connection.backoff_time.lock().unwrap();
+            if conn_backoff_time < connection_backoff_time {
                 connection = conn;
             }
         }

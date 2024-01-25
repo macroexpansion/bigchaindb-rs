@@ -1,6 +1,6 @@
 use std::{
-    cell::Cell,
     collections::HashMap,
+    sync::{Arc, Mutex},
     time::{Duration, Instant},
 };
 
@@ -58,8 +58,8 @@ impl<'a> RequestOption<'a> {
 #[derive(Clone, Debug)]
 pub struct Request<'a> {
     pub node: NormalizedNode<'a>,
-    pub backoff_time: Cell<Option<Instant>>,
-    pub retries: Cell<usize>,
+    pub backoff_time: Arc<Mutex<Option<Instant>>>,
+    pub retries: Arc<Mutex<usize>>,
     pub connection_error: Option<String>,
 }
 
@@ -67,8 +67,8 @@ impl<'a> Request<'a> {
     pub fn new(node: NormalizedNode<'a>) -> Self {
         Self {
             node,
-            backoff_time: Cell::new(Some(Instant::now())),
-            retries: Cell::new(0),
+            backoff_time: Arc::new(Mutex::new(Some(Instant::now()))),
+            retries: Arc::new(Mutex::new(0)),
             connection_error: None,
         }
     }
@@ -135,7 +135,7 @@ impl<'a> Request<'a> {
     }
 
     fn get_backoff_time_delta(&self) -> Duration {
-        if let Some(value) = self.backoff_time.get() {
+        if let Some(value) = *self.backoff_time.lock().unwrap() {
             value.duration_since(Instant::now())
         } else {
             Duration::new(0, 0)
@@ -144,8 +144,8 @@ impl<'a> Request<'a> {
 
     fn update_backoff_time(&self, _max_backoff_time: Duration) {
         if self.connection_error.is_none() {
-            self.backoff_time.set(None);
-            self.retries.set(0);
+            *self.backoff_time.lock().unwrap() = None;
+            *self.retries.lock().unwrap() = 0;
         }
     }
 }
