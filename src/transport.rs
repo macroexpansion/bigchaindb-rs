@@ -7,6 +7,7 @@ use crate::{
     request::{NormalizedNode, Request, RequestOption},
 };
 
+#[derive(Debug, Clone)]
 pub struct Transport<'a> {
     pub connection_pool: Vec<Request<'a>>,
     pub timeout: Option<Duration>,

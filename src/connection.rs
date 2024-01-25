@@ -23,6 +23,7 @@ const METADATA: &'static str = "metadata";
 const DEFAULT_NODE: &'static str = "http://localhost:9984/api/v1/";
 const DEFAULT_TIMEOUT: u64 = 20; // default timeout is 20 seconds
 
+#[derive(Debug, Clone)]
 pub struct Connection<'a> {
     // Common headers for every request
     pub headers: Option<HashMap<&'a str, &'a str>>,
