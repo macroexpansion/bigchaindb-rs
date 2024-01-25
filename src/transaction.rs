@@ -3,24 +3,24 @@
 use std::collections::HashSet;
 
 use crypto_conditions::{self, fulfillment::Fulfillment, Ed25519Sha256};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use serde_json::Value as JsonValue;
 
 use crate::{cc_jsonify, sha256_hash::sha256_hash, Details, JsonBody};
 
-#[derive(Debug, Serialize, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Operation {
     CREATE,
     TRANSFER,
 }
 
-#[derive(Debug, Serialize, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AssetDefinition {
     pub data: Option<JsonValue>,
 }
 
 /// Fields of this struct needed to be sorted alphabetically
-#[derive(Debug, Serialize, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct InputTemplate {
     pub fulfillment: Option<String>,
     pub fulfills: Option<String>,
@@ -41,13 +41,8 @@ impl InputTemplate {
     }
 }
 
-#[derive(Debug, Serialize)]
-pub struct Ed25519Condition {
-    detail: String,
-}
-
 /// Fields of this struct needed to be sorted alphabetically
-#[derive(Debug, Serialize, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Output {
     pub amount: String,
     pub condition: JsonBody,
@@ -55,7 +50,7 @@ pub struct Output {
 }
 
 /// Fields of this struct needed to be sorted alphabetically
-#[derive(Debug, Serialize, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TransactionTemplate {
     pub asset: Option<AssetDefinition>,
     pub id: Option<String>,
@@ -87,7 +82,7 @@ impl TransactionTemplate {
 pub struct Transaction;
 
 impl Transaction {
-    fn make_transaction(
+    pub fn make_transaction(
         operation: Operation,
         asset: AssetDefinition,
         metadata: JsonValue,
@@ -125,7 +120,7 @@ impl Transaction {
         )
     }
 
-    fn make_ed25519_condition(pubkey: &str, json: bool) -> Option<JsonBody> {
+    pub fn make_ed25519_condition(pubkey: &str, json: bool) -> Option<JsonBody> {
         let fulfillment = Ed25519Sha256::from(pubkey);
 
         // TODO: implement this from js code
@@ -137,7 +132,7 @@ impl Transaction {
         }
     }
 
-    fn make_output(condition: JsonBody, amount: String) -> Output {
+    pub fn make_output(condition: JsonBody, amount: String) -> Output {
         let mut public_keys = HashSet::new();
         let mut get_public_keys = |details: &Details| {
             if details.type_ == Ed25519Sha256::TYPE_NAME {
@@ -160,7 +155,7 @@ impl Transaction {
         }
     }
 
-    fn sign_transaction(
+    pub fn sign_transaction(
         transaction: &TransactionTemplate,
         private_keys: Vec<&str>,
     ) -> TransactionTemplate {

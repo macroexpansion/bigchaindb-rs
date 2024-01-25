@@ -12,7 +12,7 @@ pub mod json {
 use bs58;
 use crypto_conditions::{fulfillment::Fulfillment, Ed25519Sha256};
 use rand::RngCore;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use tweetnacl;
 
 pub fn randombytes(seed: &mut [u8; 32]) {
@@ -41,7 +41,7 @@ pub fn ed25519_keypair() -> Ed25519Keypair {
 }
 
 /// Fields of this struct needed to be sorted alphabetically
-#[derive(Debug, Serialize, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Details {
     pub public_key: String,
     #[serde(rename = "type")]
@@ -49,7 +49,7 @@ pub struct Details {
 }
 
 /// Fields of this struct needed to be sorted alphabetically
-#[derive(Debug, Serialize, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct JsonBody {
     details: Details,
     uri: String,

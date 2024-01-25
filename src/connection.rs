@@ -56,21 +56,14 @@ impl<'a> Connection<'a> {
     pub async fn post_transaction_commit(
         &mut self,
         transaction: TransactionTemplate,
-    ) -> Result<Person, Error> {
+    ) -> Result<TransactionTemplate, Error> {
         let options = RequestOption::new()
             .method(RequestMethod::Post)
             .body(transaction);
-        let resp: Person = self
+        let resp: TransactionTemplate = self
             .transport
             .forward_request(TRANSACTIONS_COMMIT, &options)
             .await?;
-        println!("{:?}", resp);
         Ok(resp)
     }
-}
-
-#[derive(serde::Deserialize, Debug)]
-pub struct Person {
-    pub name: String,
-    pub age: usize,
 }
