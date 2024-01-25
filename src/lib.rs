@@ -70,5 +70,5 @@ pub fn cc_jsonify(fulfillment: Ed25519Sha256) -> Option<JsonBody> {
         });
     }
 
-    None
+    todo!()
 }
