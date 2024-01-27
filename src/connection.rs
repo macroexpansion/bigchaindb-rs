@@ -31,26 +31,16 @@ pub struct Connection<'a> {
 }
 
 impl<'a> Connection<'a> {
-    pub fn new(
-        nodes: Vec<Option<String>>,
-        headers: HashMap<&'a str, &'a str>,
-        timeout: Option<Duration>,
-    ) -> Self {
+    pub fn new(nodes: Vec<&'a str>) -> Self {
         let mut normalized_nodes = Vec::new();
 
         for node in nodes {
-            normalized_nodes.push(NormalizedNode::new(
-                node.unwrap_or(DEFAULT_NODE.to_string()),
-                headers.clone(),
-            ));
+            normalized_nodes.push(NormalizedNode::new(node, None));
         }
 
         Self {
-            headers: Some(headers),
-            transport: Transport::new(
-                normalized_nodes,
-                timeout.unwrap_or(Duration::new(DEFAULT_TIMEOUT, 0)),
-            ),
+            headers: None,
+            transport: Transport::new(normalized_nodes, Duration::new(DEFAULT_TIMEOUT, 0)),
         }
     }
 

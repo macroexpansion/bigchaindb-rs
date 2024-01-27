@@ -1,12 +1,10 @@
-use std::collections::HashMap;
-
 use bigchaindb::{connection::Connection, json::json, transaction::Transaction};
 
 #[tokio::main]
 async fn main() {
     // let nodes = "http://localhost:3000/".to_string();
-    let nodes = "http://198.19.249.99:9984/api/v1/".to_string();
-    let mut conn = Connection::new(vec![Some(nodes)], HashMap::new(), None);
+    let nodes = "http://198.19.249.99:9984/api/v1/";
+    let mut conn = Connection::new(vec![nodes]);
 
     let assetdata = json!({
         "ft": {

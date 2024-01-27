@@ -10,12 +10,12 @@ use crate::{error::Error, transaction::TransactionTemplate};
 
 #[derive(Clone, Debug)]
 pub struct NormalizedNode<'a> {
-    pub endpoint: String,
-    pub headers: HashMap<&'a str, &'a str>,
+    pub endpoint: &'a str,
+    pub headers: Option<HashMap<&'a str, &'a str>>,
 }
 
 impl<'a> NormalizedNode<'a> {
-    pub fn new(endpoint: String, headers: HashMap<&'a str, &'a str>) -> Self {
+    pub fn new(endpoint: &'a str, headers: Option<HashMap<&'a str, &'a str>>) -> Self {
         Self { endpoint, headers }
     }
 }
@@ -81,7 +81,9 @@ impl<'a> Request<'a> {
         max_backoff_time: Duration,
     ) -> Result<T, Error> {
         let mut request_headers: HashMap<&str, &str> = HashMap::new();
-        request_headers.extend(&self.node.headers);
+        if let Some(headers) = &self.node.headers {
+            request_headers.extend(headers);
+        }
         request_headers.insert("Accept", "application/json");
 
         if config.json_body.is_some() {
