@@ -5,6 +5,7 @@ use bigchaindb::{connection::Connection, json::json, transaction::Transaction};
 #[tokio::main]
 async fn main() {
     test_list_outputs().await;
+    test_get_transaction().await;
 }
 
 async fn test_post_transaction_commit() {
@@ -43,5 +44,12 @@ async fn test_list_outputs() {
     let nodes = "http://localhost:3000/";
     let mut conn = Connection::new(vec![nodes]);
     let tx = conn.list_outputs("fdfdsfdsfsa", None).await.unwrap();
+    println!("{:?}", tx);
+}
+
+async fn test_get_transaction() {
+    let nodes = "http://localhost:3000/";
+    let mut conn = Connection::new(vec![nodes]);
+    let tx = conn.get_transaction("1").await.unwrap();
     println!("{:?}", tx);
 }

@@ -27,11 +27,17 @@ pub enum RequestMethod {
 }
 
 #[derive(Clone, Debug)]
+pub struct UrlTemplateSpec<'a> {
+    pub transaction_id: Option<&'a str>,
+}
+
+#[derive(Clone, Debug)]
 pub struct RequestOption<'a> {
     pub method: Option<RequestMethod>,
     pub query: Option<HashMap<&'a str, &'a str>>,
     pub headers: Option<HashMap<&'a str, &'a str>>,
     pub json_body: Option<TransactionTemplate>,
+    pub url_template: Option<UrlTemplateSpec<'a>>,
 }
 
 impl<'a> RequestOption<'a> {
@@ -41,6 +47,7 @@ impl<'a> RequestOption<'a> {
             query: None,
             headers: None,
             json_body: None,
+            url_template: None,
         }
     }
 
@@ -56,6 +63,11 @@ impl<'a> RequestOption<'a> {
 
     pub fn query(mut self, query: HashMap<&'a str, &'a str>) -> Self {
         self.query = Some(query);
+        self
+    }
+
+    pub fn url_template(mut self, spec: UrlTemplateSpec<'a>) -> Self {
+        self.url_template = Some(spec);
         self
     }
 }
@@ -162,6 +174,14 @@ pub async fn base_request<T: DeserializeOwned>(
     request_config: RequestOption<'_>,
     request_timeout: Option<Duration>,
 ) -> Result<T, Error> {
+    let mut expanded_url = api_url.to_string();
+
+    if let Some(url_template) = request_config.url_template {
+        if let Some(transaction_id) = url_template.transaction_id {
+            expanded_url = expanded_url.replace("{transaction_id}", transaction_id);
+        }
+    }
+
     let mut client = if request_config.method.unwrap_or(RequestMethod::Get) == RequestMethod::Post {
         let body = serde_json::to_string(
             &request_config
@@ -170,9 +190,9 @@ pub async fn base_request<T: DeserializeOwned>(
         )
         .map_err(|_| Error::SerdeError)?;
 
-        reqwest::Client::new().post(api_url).body(body)
+        reqwest::Client::new().post(expanded_url).body(body)
     } else {
-        reqwest::Client::new().get(api_url)
+        reqwest::Client::new().get(expanded_url)
     };
 
     if let Some(query) = request_config.query {

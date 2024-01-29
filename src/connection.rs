@@ -5,7 +5,7 @@ use std::{collections::HashMap, time::Duration};
 use crate::{
     error::Error,
     output::Output,
-    request::{NormalizedNode, RequestMethod, RequestOption},
+    request::{NormalizedNode, RequestMethod, RequestOption, UrlTemplateSpec},
     transaction::TransactionTemplate,
     transport::Transport,
 };
@@ -17,7 +17,7 @@ const TRANSACTIONS: &'static str = "transactions";
 const TRANSACTIONS_SYNC: &'static str = "transactions?mode=sync";
 const TRANSACTIONS_ASYNC: &'static str = "transactions?mode=async";
 const TRANSACTIONS_COMMIT: &'static str = "transactions?mode=commit";
-const TRANSACTIONS_DETAIL: &'static str = "transactions/%(transactionId)s";
+const TRANSACTIONS_DETAIL: &'static str = "transactions/{transaction_id}";
 const ASSETS: &'static str = "assets";
 const METADATA: &'static str = "metadata";
 
@@ -72,11 +72,27 @@ impl<'a> Connection<'a> {
             query.insert("spent", spent);
         }
 
-        let options = RequestOption::new()
-            .method(RequestMethod::Get)
-            .query(&query);
+        let options = RequestOption::new().method(RequestMethod::Get).query(query);
 
         let resp: Vec<Output> = self.transport.forward_request(OUTPUTS, &options).await?;
+        Ok(resp)
+    }
+
+    pub async fn get_transaction(
+        &mut self,
+        transaction_id: &'a str,
+    ) -> Result<TransactionTemplate, Error> {
+        let spec = UrlTemplateSpec {
+            transaction_id: Some(transaction_id),
+        };
+        let options = RequestOption::new()
+            .method(RequestMethod::Get)
+            .url_template(spec);
+
+        let resp: TransactionTemplate = self
+            .transport
+            .forward_request(TRANSACTIONS_DETAIL, &options)
+            .await?;
         Ok(resp)
     }
 }
