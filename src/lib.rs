@@ -1,5 +1,6 @@
 pub mod connection;
 pub mod error;
+pub mod output;
 pub mod request;
 pub mod sha256_hash;
 pub mod transaction;

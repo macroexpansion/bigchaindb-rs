@@ -53,6 +53,11 @@ impl<'a> RequestOption<'a> {
         self.json_body = Some(body);
         self
     }
+
+    pub fn query(mut self, query: &'a HashMap<&'a str, &'a str>) -> Self {
+        self.query = Some(query);
+        self
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -170,8 +175,8 @@ pub async fn base_request<T: DeserializeOwned>(
         reqwest::Client::new().get(api_url)
     };
 
-    if let Some(_query) = request_config.query {
-        todo!()
+    if let Some(query) = request_config.query {
+        client = client.query(&query);
     }
 
     if let Some(headers) = request_config.headers {

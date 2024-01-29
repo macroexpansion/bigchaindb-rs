@@ -1,9 +1,15 @@
+#![allow(dead_code)]
+
 use bigchaindb::{connection::Connection, json::json, transaction::Transaction};
 
 #[tokio::main]
 async fn main() {
-    // let nodes = "http://localhost:3000/".to_string();
-    let nodes = "http://198.19.249.99:9984/api/v1/";
+    test_list_outputs().await;
+}
+
+async fn test_post_transaction_commit() {
+    let nodes = "http://localhost:3000/";
+    // let nodes = "http://198.19.249.99:9984/api/v1/";
     let mut conn = Connection::new(vec![nodes]);
 
     let assetdata = json!({
@@ -30,5 +36,12 @@ async fn main() {
         .await
         .unwrap();
 
+    println!("{:?}", tx);
+}
+
+async fn test_list_outputs() {
+    let nodes = "http://localhost:3000/";
+    let mut conn = Connection::new(vec![nodes]);
+    let tx = conn.list_outputs("fdfdsfdsfsa", None).await.unwrap();
     println!("{:?}", tx);
 }
