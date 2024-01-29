@@ -29,8 +29,8 @@ pub enum RequestMethod {
 #[derive(Clone, Debug)]
 pub struct RequestOption<'a> {
     pub method: Option<RequestMethod>,
-    pub query: Option<&'a HashMap<&'a str, &'a str>>,
-    pub headers: Option<&'a HashMap<&'a str, &'a str>>,
+    pub query: Option<HashMap<&'a str, &'a str>>,
+    pub headers: Option<HashMap<&'a str, &'a str>>,
     pub json_body: Option<TransactionTemplate>,
 }
 
@@ -54,7 +54,7 @@ impl<'a> RequestOption<'a> {
         self
     }
 
-    pub fn query(mut self, query: &'a HashMap<&'a str, &'a str>) -> Self {
+    pub fn query(mut self, query: HashMap<&'a str, &'a str>) -> Self {
         self.query = Some(query);
         self
     }
@@ -95,12 +95,12 @@ impl<'a> Request<'a> {
             request_headers.insert("Content-Type", "application/json");
         }
 
-        if let Some(headers) = config.headers {
+        if let Some(headers) = &config.headers {
             request_headers.extend(headers);
         }
 
         let mut request_config = config.clone();
-        request_config.headers = Some(&request_headers);
+        request_config.headers = Some(request_headers);
 
         let api_url = format!(
             "{node_endpoint}{url_path}",
