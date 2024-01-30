@@ -4,9 +4,8 @@ use std::{collections::HashMap, time::Duration};
 
 use crate::{
     error::Error,
-    output::Output,
     request::{NormalizedNode, RequestMethod, RequestOption, UrlTemplateSpec},
-    transaction::TransactionTemplate,
+    transaction::{TransactionOutput, TransactionTemplate},
     transport::Transport,
 };
 
@@ -63,7 +62,7 @@ impl<'a> Connection<'a> {
         &mut self,
         public_key: &'a str,
         spent: Option<bool>,
-    ) -> Result<Vec<Output>, Error> {
+    ) -> Result<Vec<TransactionOutput>, Error> {
         let mut query = HashMap::new();
         query.insert("public_key", public_key);
 
@@ -74,7 +73,8 @@ impl<'a> Connection<'a> {
 
         let options = RequestOption::new().method(RequestMethod::Get).query(query);
 
-        let resp: Vec<Output> = self.transport.forward_request(OUTPUTS, &options).await?;
+        let resp: Vec<TransactionOutput> =
+            self.transport.forward_request(OUTPUTS, &options).await?;
         Ok(resp)
     }
 

@@ -9,6 +9,12 @@ use serde_json::Value as JsonValue;
 use crate::{cc_jsonify, sha256_hash::sha256_hash, Details, JsonBody};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TransactionOutput {
+    pub output_index: i64,
+    pub transaction_id: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Operation {
     CREATE,
     TRANSFER,
