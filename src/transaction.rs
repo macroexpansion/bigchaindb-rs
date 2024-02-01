@@ -4,7 +4,7 @@ use std::collections::HashSet;
 
 use crypto_conditions::{self, fulfillment::Fulfillment, Ed25519Sha256};
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Value as JsonValue};
+use serde_json::Value as JsonValue;
 
 use crate::{cc_jsonify, sha256_hash::sha256_hash, Details, JsonBody};
 
@@ -27,9 +27,20 @@ pub enum Operation {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct AssetDefinition {
+pub struct CreateAsset {
     pub data: Option<JsonValue>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TransferAsset {
     pub id: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum Asset {
+    Definition(CreateAsset),
+    Link(TransferAsset),
 }
 
 /// Fields of this struct needed to be sorted alphabetically
@@ -65,7 +76,7 @@ pub struct Output {
 /// Fields of this struct needed to be sorted alphabetically
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TransactionTemplate {
-    pub asset: Option<JsonValue>,
+    pub asset: Option<Asset>,
     pub id: Option<String>,
     pub inputs: Vec<InputTemplate>,
     pub metadata: Option<JsonValue>,
@@ -97,7 +108,7 @@ pub struct Transaction;
 impl Transaction {
     pub fn make_transaction(
         operation: Operation,
-        asset: JsonValue,
+        asset: Asset,
         metadata: JsonValue,
         outputs: Vec<Output>,
         inputs: Vec<InputTemplate>,
@@ -118,21 +129,16 @@ impl Transaction {
         outputs: Vec<Output>,
         issuers: Vec<String>,
     ) -> TransactionTemplate {
-        let asset_definition = json!({
-            "data": asset,
-        });
+        // let asset_definition = json!({
+        //     "data": asset,
+        // });
+        let asset = Asset::Definition(CreateAsset { data: asset });
         let inputs: Vec<InputTemplate> = issuers
             .iter()
             .map(|issuer| InputTemplate::new(vec![issuer.to_string()], None, None))
             .collect();
 
-        Self::make_transaction(
-            Operation::CREATE,
-            asset_definition,
-            metadata,
-            outputs,
-            inputs,
-        )
+        Self::make_transaction(Operation::CREATE, asset, metadata, outputs, inputs)
     }
 
     pub fn make_transfer_transaction(
@@ -144,17 +150,13 @@ impl Transaction {
         let tx_id = if first_unspent_output.tx.operation.as_ref().unwrap() == &Operation::CREATE {
             first_unspent_output.to_owned().tx.id
         } else {
-            first_unspent_output
-                .to_owned()
-                .tx
-                .asset
-                .unwrap()
-                .get("id")
-                .map(|e| e.to_string())
+            let Asset::Link(asset) = first_unspent_output.to_owned().tx.asset.unwrap() else {
+                unreachable!()
+            };
+            asset.id
         };
-        let asset_link = json!({
-            "id": tx_id,
-        });
+
+        let asset = Asset::Link(TransferAsset { id: tx_id });
 
         let inputs: Vec<InputTemplate> = unspent_outputs
             .iter()
@@ -173,7 +175,7 @@ impl Transaction {
             })
             .collect();
 
-        Self::make_transaction(Operation::TRANSFER, asset_link, metadata, outputs, inputs)
+        Self::make_transaction(Operation::TRANSFER, asset, metadata, outputs, inputs)
     }
 
     pub fn make_ed25519_condition(pubkey: &str, json: bool) -> Option<JsonBody> {
