@@ -43,6 +43,22 @@ pub enum Asset {
     Link(TransferAsset),
 }
 
+impl Asset {
+    pub fn get_link_id(&self) -> Option<String> {
+        match self {
+            Self::Link(TransferAsset { id }) => id.clone(),
+            Self::Definition(_) => None,
+        }
+    }
+
+    pub fn get_definition_data(&self) -> Option<&JsonValue> {
+        match self {
+            Self::Definition(CreateAsset { data }) => data.as_ref(),
+            Self::Link(_) => None,
+        }
+    }
+}
+
 /// Fields of this struct needed to be sorted alphabetically
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct InputTemplate {
