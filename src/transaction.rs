@@ -10,13 +10,13 @@ use crate::{cc_jsonify, sha256_hash::sha256_hash, Details, JsonBody};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UnspentOutput {
-    pub output_index: i64,
+    pub output_index: usize,
     pub tx: TransactionTemplate,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TransactionOutput {
-    pub output_index: i64,
+    pub output_index: usize,
     pub transaction_id: String,
 }
 
@@ -177,7 +177,7 @@ impl Transaction {
         let inputs: Vec<InputTemplate> = unspent_outputs
             .iter()
             .map(|output| {
-                let fulfilled_output = &output.tx.outputs[output.output_index as usize];
+                let fulfilled_output = &output.tx.outputs[output.output_index];
                 let transaction_link = TransactionOutput {
                     output_index: output.output_index,
                     transaction_id: output.clone().tx.id.unwrap(),
