@@ -347,7 +347,7 @@ mod tests {
     }
 
     #[test]
-    fn test_sign_transaction() {
+    fn test_sign_create_transaction() {
         let assetdata = serde_json::json!({
             "ft": {
                 "signature": "signature",
@@ -377,6 +377,49 @@ mod tests {
         assert_eq!(
             signed_transaction.id.unwrap(),
             "1d050a282da39254bdbec159cba7810d8ab1a46b62793f1287deb4744277e34e"
+        );
+    }
+
+    #[test]
+    fn test_sign_transfer_transaction() {
+        let assetdata = serde_json::json!({
+            "ft": {
+                "signature": "signature",
+                "device": "device",
+            }
+        });
+        let metadata = serde_json::json!({"metadata": "metadata"});
+        let asset = Some(assetdata);
+        let public_key = "6zaQbbRi7RCFhCF35tpVDu2nEfR9fZCqx2MvUa7pKRmX";
+        let private_key = "CHwxsNPzRXTzCz25KZ9TJcBJ45H25JKkLL4HrX1nBfXT";
+        let condition = Transaction::make_ed25519_condition(&public_key, true).unwrap();
+        let output = Transaction::make_output(condition, String::from("1"));
+        let transaction = Transaction::make_create_transaction(
+            asset,
+            metadata.clone(),
+            vec![output],
+            vec![public_key.to_string()],
+        );
+        let private_keys = vec![private_key];
+        let signed_create_transaction =
+            Transaction::sign_transaction(&transaction, private_keys.clone());
+
+        let condition = Transaction::make_ed25519_condition(&public_key, true).unwrap();
+        let output = Transaction::make_output(condition, String::from("1"));
+        let transfer_transaction = Transaction::make_transfer_transaction(
+            vec![UnspentOutput {
+                tx: signed_create_transaction,
+                output_index: 0,
+            }],
+            vec![output],
+            metadata,
+        );
+        let signed_transfer_transaction =
+            Transaction::sign_transaction(&transfer_transaction, private_keys);
+
+        assert_eq!(
+            signed_transfer_transaction.id.unwrap(),
+            "dc084d12f8f05e8eec77dab8023087eecfd6afd9ddb573c6243d3cfe3416f50f"
         );
     }
 }
