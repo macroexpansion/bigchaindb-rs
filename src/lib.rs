@@ -51,8 +51,8 @@ pub struct Details {
 /// Fields of this struct needed to be sorted alphabetically
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct JsonBody {
-    details: Details,
-    uri: String,
+    pub details: Details,
+    pub uri: String,
 }
 
 pub fn cc_jsonify(fulfillment: Ed25519Sha256) -> Option<JsonBody> {
