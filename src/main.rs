@@ -26,7 +26,7 @@ async fn test_post_transaction_commit() {
     let output = Transaction::make_output(condition, String::from("1"));
     let transaction = Transaction::make_create_transaction(
         Some(assetdata),
-        metadata,
+        Some(metadata),
         vec![output],
         vec![public_key.to_string()],
     );

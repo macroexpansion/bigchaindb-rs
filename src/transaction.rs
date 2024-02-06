@@ -28,12 +28,12 @@ pub enum Operation {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateAsset {
-    pub data: Option<JsonValue>,
+    pub data: JsonValue,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TransferAsset {
-    pub id: Option<String>,
+    pub id: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -46,14 +46,14 @@ pub enum Asset {
 impl Asset {
     pub fn get_link_id(&self) -> Option<String> {
         match self {
-            Self::Link(TransferAsset { id }) => id.clone(),
+            Self::Link(TransferAsset { id }) => Some(id.clone()),
             Self::Definition(_) => None,
         }
     }
 
     pub fn get_definition_data(&self) -> Option<&JsonValue> {
         match self {
-            Self::Definition(CreateAsset { data }) => data.as_ref(),
+            Self::Definition(CreateAsset { data }) => Some(data),
             Self::Link(_) => None,
         }
     }
@@ -124,15 +124,15 @@ pub struct Transaction;
 impl Transaction {
     pub fn make_transaction(
         operation: Operation,
-        asset: Asset,
-        metadata: JsonValue,
+        asset: Option<Asset>,
+        metadata: Option<JsonValue>,
         outputs: Vec<Output>,
         inputs: Vec<InputTemplate>,
     ) -> TransactionTemplate {
         let mut tx = TransactionTemplate::new();
         tx.operation = Some(operation);
-        tx.asset = Some(asset);
-        tx.metadata = Some(metadata);
+        tx.asset = asset;
+        tx.metadata = metadata;
         tx.inputs = inputs;
         tx.outputs = outputs;
         tx
@@ -141,14 +141,15 @@ impl Transaction {
     /// Generate a `CREATE` transaction holding the `asset`, `metadata`, and `outputs`, to be signed by the `issuers`.
     pub fn make_create_transaction(
         asset: Option<JsonValue>,
-        metadata: JsonValue,
+        metadata: Option<JsonValue>,
         outputs: Vec<Output>,
         issuers: Vec<String>,
     ) -> TransactionTemplate {
-        // let asset_definition = json!({
-        //     "data": asset,
-        // });
-        let asset = Asset::Definition(CreateAsset { data: asset });
+        let asset = if let Some(asset) = asset {
+            Some(Asset::Definition(CreateAsset { data: asset }))
+        } else {
+            None
+        };
         let inputs: Vec<InputTemplate> = issuers
             .iter()
             .map(|issuer| InputTemplate::new(vec![issuer.to_string()], None, None))
@@ -160,11 +161,11 @@ impl Transaction {
     pub fn make_transfer_transaction(
         unspent_outputs: Vec<UnspentOutput>,
         outputs: Vec<Output>,
-        metadata: JsonValue,
+        metadata: Option<JsonValue>,
     ) -> TransactionTemplate {
         let first_unspent_output = unspent_outputs.first().unwrap();
         let tx_id = if first_unspent_output.tx.operation.as_ref().unwrap() == &Operation::CREATE {
-            first_unspent_output.to_owned().tx.id
+            first_unspent_output.to_owned().tx.id.unwrap()
         } else {
             let Asset::Link(asset) = first_unspent_output.to_owned().tx.asset.unwrap() else {
                 unreachable!()
@@ -191,7 +192,7 @@ impl Transaction {
             })
             .collect();
 
-        Self::make_transaction(Operation::TRANSFER, asset, metadata, outputs, inputs)
+        Self::make_transaction(Operation::TRANSFER, Some(asset), metadata, outputs, inputs)
     }
 
     pub fn make_ed25519_condition(pubkey: &str, json: bool) -> Option<JsonBody> {
@@ -339,7 +340,7 @@ mod tests {
         let output = Transaction::make_output(condition, String::from("1"));
 
         let transaction =
-            Transaction::make_create_transaction(asset, metadata, vec![output], vec![pk]);
+            Transaction::make_create_transaction(asset, Some(metadata), vec![output], vec![pk]);
         let json = transaction.serialize_transaction_into_canonical_string();
 
         let json_target = r#"{"asset":{"data":{"ft":{"device":"device","signature":"signature"}}},"id":null,"inputs":[{"fulfillment":null,"fulfills":null,"owners_before":["4vJ9JU1bJJE96FWSJKvHsmmFADCg4gpZQff4P3bkLKi"]}],"metadata":{"metadata":"metadata"},"operation":"CREATE","outputs":[{"amount":"1","condition":{"details":{"public_key":"4vJ9JU1bJJE96FWSJKvHsmmFADCg4gpZQff4P3bkLKi","type":"ed25519-sha-256"},"uri":"ni:///sha-256;SSSZwcfcc76xHGoY48JsUThq0cr6fgJWCR8lXx9e5F0?fpt=ed25519-sha-256&cost=131072"},"public_keys":["4vJ9JU1bJJE96FWSJKvHsmmFADCg4gpZQff4P3bkLKi"]}],"version":"2.0"}"#;
@@ -365,7 +366,7 @@ mod tests {
 
         let transaction = Transaction::make_create_transaction(
             asset,
-            metadata,
+            Some(metadata),
             vec![output],
             vec![public_key.to_string()],
         );
@@ -396,7 +397,7 @@ mod tests {
         let output = Transaction::make_output(condition, String::from("1"));
         let transaction = Transaction::make_create_transaction(
             asset,
-            metadata.clone(),
+            Some(metadata.clone()),
             vec![output],
             vec![public_key.to_string()],
         );
@@ -412,7 +413,7 @@ mod tests {
                 output_index: 0,
             }],
             vec![output],
-            metadata,
+            Some(metadata),
         );
         let signed_transfer_transaction =
             Transaction::sign_transaction(&transfer_transaction, private_keys);
