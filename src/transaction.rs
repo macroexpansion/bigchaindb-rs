@@ -234,19 +234,26 @@ impl Transaction {
         private_keys: Vec<&str>,
     ) -> TransactionTemplate {
         let mut signed_transaction: TransactionTemplate = transaction.clone();
-        let serialized_transaction = transaction.serialize_transaction_into_canonical_string();
+        let mut serialized_transaction = transaction.serialize_transaction_into_canonical_string();
 
         for (index, input_template) in signed_transaction.inputs.iter_mut().enumerate() {
             let private_key = private_keys[index];
             let private_key = bs58::decode(private_key).into_vec().unwrap();
 
             let transaction_unique_fulfillment: &str =
-                if let Some(_fulfills) = &input_template.fulfills {
-                    // TODO: implement this from js code
-                    // serializedTransaction
-                    //     .concat(input.fulfills.transaction_id)
-                    //     .concat(input.fulfills.output_index)
-                    todo!()
+                if let Some(fulfills) = &input_template.fulfills {
+                    let transaction_id = fulfills
+                        .get("transaction_id")
+                        .expect("no transaction_id in json::Value")
+                        .to_string()
+                        .replace("\"", ""); // remove double quotes around the string
+                    let output_index = fulfills
+                        .get("output_index")
+                        .expect("no output_index in json::Value")
+                        .to_string();
+                    serialized_transaction.push_str(&transaction_id);
+                    serialized_transaction.push_str(&output_index);
+                    &serialized_transaction
                 } else {
                     &serialized_transaction
                 };
