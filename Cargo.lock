@@ -123,6 +123,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sha3",
+ "stable-sort",
  "thiserror",
  "tokio",
  "tweetnacl",
@@ -1186,6 +1187,16 @@ checksum = "d91ed6c858b01f942cd56b37a94b3e0a1798290327d1236e4d9cf4eaca44d29d"
 dependencies = [
  "base64ct",
  "der",
+]
+
+[[package]]
+name = "stable-sort"
+version = "0.1.0"
+source = "git+https://github.com/macroexpansion/mcrx?branch=main#e83be5d224727c8189836d5a47ce4ed55c6b5566"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]

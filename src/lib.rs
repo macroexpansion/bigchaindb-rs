@@ -13,6 +13,7 @@ use bs58;
 use crypto_conditions::{fulfillment::Fulfillment, Ed25519Sha256};
 use rand::RngCore;
 use serde::{Deserialize, Serialize};
+use stable_sort::stable_sorted;
 use tweetnacl;
 
 pub fn randombytes(seed: &mut [u8; 32]) {
@@ -40,7 +41,7 @@ pub fn ed25519_keypair() -> Ed25519Keypair {
     Ed25519Keypair { pk, sk }
 }
 
-/// Fields of this struct needed to be sorted alphabetically
+#[stable_sorted]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Details {
     pub public_key: String,
@@ -48,7 +49,7 @@ pub struct Details {
     pub type_: String,
 }
 
-/// Fields of this struct needed to be sorted alphabetically
+#[stable_sorted]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct JsonBody {
     pub details: Details,

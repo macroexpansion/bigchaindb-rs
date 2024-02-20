@@ -5,6 +5,7 @@ use std::collections::HashSet;
 use crypto_conditions::{self, fulfillment::Fulfillment, Ed25519Sha256};
 use serde::{Deserialize, Serialize};
 use serde_json::Value as JsonValue;
+use stable_sort::stable_sorted;
 
 use crate::{cc_jsonify, sha256_hash::sha256_hash, Details, JsonBody};
 
@@ -59,7 +60,7 @@ impl Asset {
     }
 }
 
-/// Fields of this struct needed to be sorted alphabetically
+#[stable_sorted]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct InputTemplate {
     pub fulfillment: Option<String>,
@@ -81,7 +82,7 @@ impl InputTemplate {
     }
 }
 
-/// Fields of this struct needed to be sorted alphabetically
+#[stable_sorted]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Output {
     pub amount: String,
@@ -89,7 +90,7 @@ pub struct Output {
     pub public_keys: Vec<String>,
 }
 
-/// Fields of this struct needed to be sorted alphabetically
+#[stable_sorted]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TransactionTemplate {
     pub asset: Option<Asset>,
