@@ -4,9 +4,7 @@ pub struct Base64Url;
 
 impl Base64Url {
     pub fn decode(url: &str) -> Vec<u8> {
-        let buffer = base64_url::decode(url).unwrap();
-
-        buffer
+        base64_url::decode(url).unwrap()
     }
 
     pub fn encode(buffer: &[u8]) -> String {

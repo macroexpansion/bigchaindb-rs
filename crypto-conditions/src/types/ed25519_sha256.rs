@@ -36,6 +36,12 @@ pub struct Ed25519Sha256 {
     pub signature: Option<[u8; 64]>,
 }
 
+impl Default for Ed25519Sha256 {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Ed25519Sha256 {
     pub fn new() -> Self {
         Self {
@@ -49,7 +55,7 @@ impl Ed25519Sha256 {
     }
 
     pub fn sign(&mut self, message: &[u8], private_key: &[u8; 32]) {
-        let signing_key = SigningKey::from_bytes(&private_key);
+        let signing_key = SigningKey::from_bytes(private_key);
         let verifying_key = signing_key.verifying_key();
         self.public_key = Some(verifying_key.0);
 
@@ -77,8 +83,8 @@ impl Fulfillment for Ed25519Sha256 {
 
     // TODO: handle unwrap()
     fn serialize_binary(&self) -> Vec<u8> {
-        let public_key: &[u8] = &self.public_key.as_ref().unwrap().as_slice();
-        let signature: &[u8] = &self.signature.as_ref().unwrap().as_slice();
+        let public_key: &[u8] = self.public_key.as_ref().unwrap().as_slice();
+        let signature: &[u8] = self.signature.as_ref().unwrap().as_slice();
         let fulfillment = Ed25519Sha256Fulfillment {
             public_key: Some(public_key),
             signature: Some(signature),
