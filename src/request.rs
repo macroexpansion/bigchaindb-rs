@@ -40,6 +40,12 @@ pub struct RequestOption<'a> {
     pub url_template: Option<UrlTemplateSpec<'a>>,
 }
 
+impl<'a> Default for RequestOption<'a> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<'a> RequestOption<'a> {
     pub fn new() -> Self {
         Self {
@@ -186,7 +192,7 @@ pub async fn base_request<T: DeserializeOwned>(
         let body = serde_json::to_string(
             &request_config
                 .json_body
-                .ok_or_else(|| Error::RequestNoBodyProvided)?,
+                .ok_or(Error::RequestNoBodyProvided)?,
         )
         .map_err(|_| Error::SerdeError)?;
 

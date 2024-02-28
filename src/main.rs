@@ -22,7 +22,7 @@ async fn test_post_transaction_commit() {
     let metadata = json!({"metadata": "rust"});
     let public_key = "6zaQbbRi7RCFhCF35tpVDu2nEfR9fZCqx2MvUa7pKRmX";
     let private_key = "CHwxsNPzRXTzCz25KZ9TJcBJ45H25JKkLL4HrX1nBfXT";
-    let condition = Transaction::make_ed25519_condition(&public_key, true).unwrap();
+    let condition = Transaction::make_ed25519_condition(public_key, true).unwrap();
     let output = Transaction::make_output(condition, String::from("1"));
     let transaction = Transaction::make_create_transaction(
         Some(assetdata),

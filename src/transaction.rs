@@ -102,6 +102,12 @@ pub struct TransactionTemplate {
     pub version: String,
 }
 
+impl Default for TransactionTemplate {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl TransactionTemplate {
     pub fn new() -> Self {
         Self {
@@ -146,11 +152,7 @@ impl Transaction {
         outputs: Vec<Output>,
         issuers: Vec<String>,
     ) -> TransactionTemplate {
-        let asset = if let Some(asset) = asset {
-            Some(Asset::Definition(CreateAsset { data: asset }))
-        } else {
-            None
-        };
+        let asset = asset.map(|asset| Asset::Definition(CreateAsset { data: asset }));
         let inputs: Vec<InputTemplate> = issuers
             .iter()
             .map(|issuer| InputTemplate::new(vec![issuer.to_string()], None, None))
@@ -248,7 +250,7 @@ impl Transaction {
                         .get("transaction_id")
                         .expect("no transaction_id in json::Value")
                         .to_string()
-                        .replace("\"", ""); // remove double quotes around the string
+                        .replace('\"', ""); // remove double quotes around the string
                     let output_index = fulfills
                         .get("output_index")
                         .expect("no output_index in json::Value")

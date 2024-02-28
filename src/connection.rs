@@ -9,18 +9,18 @@ use crate::{
     transport::Transport,
 };
 
-const BLOCKS: &'static str = "blocks";
-const BLOCKS_DETAIL: &'static str = "blocks/%(blockHeight)s";
-const OUTPUTS: &'static str = "outputs";
-const TRANSACTIONS: &'static str = "transactions";
-const TRANSACTIONS_SYNC: &'static str = "transactions?mode=sync";
-const TRANSACTIONS_ASYNC: &'static str = "transactions?mode=async";
-const TRANSACTIONS_COMMIT: &'static str = "transactions?mode=commit";
-const TRANSACTIONS_DETAIL: &'static str = "transactions/{transaction_id}";
-const ASSETS: &'static str = "assets";
-const METADATA: &'static str = "metadata";
+const BLOCKS: &str = "blocks";
+const BLOCKS_DETAIL: &str = "blocks/%(blockHeight)s";
+const OUTPUTS: &str = "outputs";
+const TRANSACTIONS: &str = "transactions";
+const TRANSACTIONS_SYNC: &str = "transactions?mode=sync";
+const TRANSACTIONS_ASYNC: &str = "transactions?mode=async";
+const TRANSACTIONS_COMMIT: &str = "transactions?mode=commit";
+const TRANSACTIONS_DETAIL: &str = "transactions/{transaction_id}";
+const ASSETS: &str = "assets";
+const METADATA: &str = "metadata";
 
-const DEFAULT_NODE: &'static str = "http://localhost:9984/api/v1/";
+const DEFAULT_NODE: &str = "http://localhost:9984/api/v1/";
 const DEFAULT_TIMEOUT: u64 = 20; // default timeout is 20 seconds
 
 #[derive(Debug, Clone)]

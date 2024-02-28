@@ -9,12 +9,12 @@ pub mod json {
     pub use serde_json::*;
 }
 
-use bs58;
+
 use crypto_conditions::{fulfillment::Fulfillment, Ed25519Sha256};
 use rand::RngCore;
 use serde::{Deserialize, Serialize};
 use stable_sort::stable_sorted;
-use tweetnacl;
+
 
 pub fn randombytes(seed: &mut [u8; 32]) {
     let mut rng = rand::thread_rng();
